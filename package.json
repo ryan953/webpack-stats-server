@@ -11,6 +11,6 @@
   "devDependencies": {},
   "scripts": {
     "prestart": "mkdir -p __data__",
-    "start": "DATA_ROOT=__data__ node ./index.js"
+    "start": "node index.js"
   }
 }

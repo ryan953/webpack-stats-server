@@ -1,3 +1,4 @@
+const AWS = require('aws-sdk');
 const bodyParser = require('body-parser');
 const express = require('express');
 const fs = require('fs');
@@ -7,6 +8,8 @@ const path = require('path');
 const PORT = process.env.PORT || 5000;
 const DATA_ROOT = process.env.DATA_ROOT || '';
 const PUBLIC_ROOT = process.env.PUBLIC_ROOT || '';
+
+const s3 = new AWS.S3();
 
 if (!DATA_ROOT) {
   throw Error('Error: DATA_ROOT not set. You must configure a folder where uploads will be saved.');
@@ -27,38 +30,88 @@ if (PUBLIC_ROOT) {
 }
 
 app.get('/api/list', function(req, response) {
-  const globOptions = {cwd: DATA_ROOT};
-  glob('**/*.json', globOptions, function(err, files) {
-    if (err) {
-      response.stats(500).json({
-        error: 'Error collecting file list',
-        orig: err,
-      });
-    } else {
-      response.status(200).json({paths: files});
-    }
-  });
+  if (DATA_ROOT.startsWith('s3://')) {
+    const parts = DATA_ROOT.match('s3://([^/]+)(.*)');
+    const Bucket = parts[1];
+    const Prefix = parts[2];
+
+    const params = {
+      Bucket: Bucket,
+      MaxKeys: 0,
+      Prefix: Prefix,
+      RequestPayer: 'requester',
+    };
+    s3.listObjectsV2(params, function(err, data) {
+      if (err) {
+        response.stats(500).json({
+          error: 'Error collecting file list',
+          orig: err,
+          stack: err.stack,
+        });
+      } else {
+        response.status(200).json({paths: data});
+      }
+    });
+  } else {
+    const globOptions = {cwd: DATA_ROOT};
+    glob('**/*.json', globOptions, function(err, files) {
+      if (err) {
+        response.stats(500).json({
+          error: 'Error collecting file list',
+          orig: err,
+        });
+      } else {
+        response.status(200).json({paths: files});
+      }
+    });
+  }
 });
 
 app.get('/api/get', function(req, response) {
-  try {
-    const filePath = path.resolve(DATA_ROOT, req.query.file || '');
-    if (filePath === DATA_ROOT) {
-      response.status(404).json({
-        error: 'File not found',
-        file: req.query.file,
-      });
-    } else {
-      // check that file exists
+  if (DATA_ROOT.startsWith('s3://')) {
+    const parts = DATA_ROOT.match('s3://([^/]+)(.*)');
+    const Bucket = parts[1];
+    const Prefix = parts[2];
 
-      response.status(200).sendFile(filePath);
-    }
-  } catch (err) {
-    response.status(500).json({
-      error: 'Error sending file',
-      orig: err,
-      query: req.query,
+    const params = {
+      Bucket: Bucket,
+      Key: `${Prefix}${req.query.file || ''}`,
+      RequestPayer: 'requester',
+    };
+    s3.getObject(params, function(err, data) {
+      if (err) {
+        response.status(404).json({
+          error: 'File not found',
+          orig: err,
+          file: req.query.file,
+        });
+      } else {
+        response
+          .status(200)
+          .set('Content-Type', 'application/json')
+          .send(data.Body);
+      }
     });
+  } else {
+    try {
+      const filePath = path.resolve(DATA_ROOT, req.query.file || '');
+      if (filePath === DATA_ROOT) {
+        response.status(404).json({
+          error: 'File not found',
+          file: req.query.file,
+        });
+      } else {
+        // check that file exists
+
+        response.status(200).sendFile(filePath);
+      }
+    } catch (err) {
+      response.status(500).json({
+        error: 'Error sending file',
+        orig: err,
+        query: req.query,
+      });
+    }
   }
 });
 
@@ -71,19 +124,45 @@ app.post(
   function(req, response) {
     const body = req.body;
     const name = 'upload-' + Date.now() + '.json';
-    fs.writeFile(path.resolve(DATA_ROOT, name), body, function(err) {
-      if (err) {
-        response.status(500).json({
-          error: 'Error writing file',
-          orig: err,
-        });
-      } else {
-        response.status(200).json({
-          message: 'File saved as ' + name,
-        });
-      }
-    });
-});
+
+    if (DATA_ROOT.startsWith('s3://')) {
+      const parts = DATA_ROOT.match('s3://([^/]+)(.*)');
+      const Bucket = parts[1];
+      const Prefix = parts[2];
+
+      const params = {
+        Bucket: Bucket,
+        Key: `${Prefix}${name}`,
+        Body: body,
+      };
+      s3.upload(params, function(err, data) {
+        if (err) {
+          response.status(500).json({
+            error: 'Error writing file',
+            orig: err,
+          });
+        } else {
+          response.status(200).json({
+            message: 'File saved as ' + name,
+          });
+        }
+      });
+    } else {
+      fs.writeFile(path.resolve(DATA_ROOT, name), body, function(err) {
+        if (err) {
+          response.status(500).json({
+            error: 'Error writing file',
+            orig: err,
+          });
+        } else {
+          response.status(200).json({
+            message: 'File saved as ' + name,
+          });
+        }
+      });
+    }
+  }
+);
 
 if (PUBLIC_ROOT) {
   // All remaining requests return the React app, so it can handle routing.
