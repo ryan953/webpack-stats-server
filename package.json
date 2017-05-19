@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Simple static webserver for webpack-dependency-size",
   "dependencies": {
+    "aws-sdk": "^2.54.0",
     "body-parser": "^1.17.2",
     "express": "^4.14.1",
     "glob": "^7.1.1"
