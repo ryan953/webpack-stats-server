@@ -123,7 +123,25 @@ app.post(
   }),
   function(req, response) {
     const body = req.body;
-    const name = 'upload-' + Date.now() + '.json';
+
+    const today = new Date();
+    const now = Date.now();
+    const calendar = [
+      today.getUTCFullYear(),
+      today.getUTCMonth(),
+      today.getUTCDate(),
+      today.getUTCHours(),
+      today.getUTCMinutes(),
+      today.getUTCSeconds(),
+    ].join('-');
+
+    const name = [
+      req.query.user || 'anonymous',
+      req.query.project || 'default',
+      `$(calendar)_$(now)`,
+      req.query.branch || 'master',
+      req.query.commit || 'HEAD',
+    ].join('/') + '.json';
 
     if (DATA_ROOT.startsWith('s3://')) {
       const parts = DATA_ROOT.match('s3://([^/]+)(.*)');
