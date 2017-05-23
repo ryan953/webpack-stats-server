@@ -49,7 +49,11 @@ app.get('/api/list', function(req, response) {
           stack: err.stack,
         });
       } else {
-        response.status(200).json({paths: data});
+        response.status(200).json({
+          paths: data.Contents.map((item) => {
+            return item.Key;
+          }),
+        });
       }
     });
   } else {
