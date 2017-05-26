@@ -142,7 +142,7 @@ app.post(
     const name = [
       req.query.user || 'anonymous',
       req.query.project || 'default',
-      `$(calendar)_$(now)`,
+      `${calendar}_${now}`,
       req.query.branch || 'master',
       req.query.commit || 'HEAD',
     ].join('/') + '.json';
