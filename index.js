@@ -56,7 +56,7 @@ app.get('/api/list', function(req, response) {
     };
     s3.listObjectsV2(params, function(err, data) {
       if (err) {
-        response.stats(500).json({
+        response.status(500).json({
           error: 'Error collecting file list',
           orig: err,
           stack: err.stack,
@@ -74,7 +74,7 @@ app.get('/api/list', function(req, response) {
     const globOptions = {cwd: DATA_ROOT};
     glob('**/*.json', globOptions, function(err, files) {
       if (err) {
-        response.stats(500).json({
+        response.status(500).json({
           error: 'Error collecting file list',
           orig: err,
         });
