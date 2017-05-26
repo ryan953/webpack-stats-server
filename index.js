@@ -29,8 +29,8 @@ if (!DATA_ROOT) {
 
 function getS3BucketAndPrefix(url) {
   const parts = url.match('s3://([^/]+)/?(.*)');
-  const Bucket = parts[0];
-  const Prefix = parts[1];
+  const Bucket = parts[1];
+  const Prefix = parts[2];
   return [Bucket, Prefix];
 }
 
@@ -50,8 +50,8 @@ app.get('/api/list', function(req, response) {
 
     const params = {
       Bucket: Bucket,
-      MaxKeys: 0,
       Prefix: Prefix,
+      Delimiter: '/',
       RequestPayer: 'requester',
     };
     s3.listObjectsV2(params, function(err, data) {
@@ -163,7 +163,7 @@ app.post(
       `${calendar}_${now}`,
       req.query.branch || 'master',
       req.query.commit || 'HEAD',
-    ].join('/') + '.json';
+    ].join('_') + '.json';
 
     if (DATA_ROOT.startsWith('s3://')) {
       const parts = getS3BucketAndPrefix(DATA_ROOT);
