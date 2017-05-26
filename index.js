@@ -151,18 +151,25 @@ app.post(
       today.getUTCFullYear(),
       today.getUTCMonth(),
       today.getUTCDate(),
+    ].join('-') + '_' + [
       today.getUTCHours(),
       today.getUTCMinutes(),
       today.getUTCSeconds(),
-    ].join('-');
+    ].join(':');
 
-    const name = [
-      req.query.user || 'anonymous',
-      req.query.project || 'default',
-      `${calendar}_${now}`,
-      req.query.branch || 'master',
-      req.query.commit || 'HEAD',
-    ].join('_') + '.json';
+    const name = req.query.commit
+      ? [
+          req.query.user || 'anonymous',
+          req.query.project || 'default',
+          `${calendar}_${now}`,
+          req.query.branch || 'master',
+          req.query.commit || 'HEAD',
+        ].join('_') + '.json'
+      : [
+        req.query.user || 'anonymous',
+        `${calendar}_${now}`,
+        req.query.desc,
+      ].join('_') + '.json';
 
     if (DATA_ROOT.startsWith('s3://')) {
       const parts = getS3BucketAndPrefix(DATA_ROOT);

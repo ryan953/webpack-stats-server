@@ -1,48 +1,75 @@
 #!/usr/bin/env bash
 
 stats_file=$1
-url=$2
+#strip single trailing slash if exists on url, it'll be added back.
+url="${2/%\//}"
+desc=$3
 
-if [[ -z $url ]]; then
-  echo 'No url specified. Where should we upload to?'
-  exit 1
-fi
+function main() {
+  if [[ -z $url ]]; then
+    echo 'No url specified. Where should we upload to?'
+    exit 1
+  fi
 
-#strip single trailing slash if exists, it'll be added back.
-url="${url/%\//}"
+  is_git_repo=$(git rev-parse --is-inside-work-tree 2> /dev/null)
+  if [[ $is_git_repo == 'true' ]]; then
+    upload_from_git_repo
+  elif [[ "x$desc" != "x" ]]; then
+    # fall back to uploading with a description, but don't echo help for this, it's jank
+    upload_with_description
+  else
+    echo "Not in a git repo, can't tag this file. Sorry"
+    exit 2
+  fi
+}
 
-is_git_repo=$(git rev-parse --is-inside-work-tree 2> /dev/null)
-if [[ $is_git_repo != 'true' ]]; then
-  echo "Not in a git repo, can't tag this file. Sorry"
-  exit 2
-fi
+function do_upload () {
+  echo ""
+  echo "$stats_file into $url/api/save?$query"
+  echo ""
 
-commit=$(git rev-list HEAD --max-count 1)
-branch=$(git rev-parse --abbrev-ref HEAD)
+  curl -H "Content-Type: application/json" \
+    -X POST \
+    -d @$stats_file $url/api/save?$query \
+    -H 'Accept: text/plain'
 
-project_path=$(git rev-parse --show-toplevel)
-project_name=$(basename $project_path)
+  echo ""
+  echo "Done"
+}
 
-query="user=$USER\
-  &project=$project_name\
-  &branch=$branch\
-  &commit=$commit\
-  " | tr -d ' '
+function upload_from_git_repo () {
+  commit=$(git rev-list HEAD --max-count 1)
+  branch=$(git rev-parse --abbrev-ref HEAD)
 
-echo "Uploading:"
-echo "    user = $USER"
-echo "    project = $project_name"
-echo "    branch = $branch"
-echo "    commit = $commit"
+  project_path=$(git rev-parse --show-toplevel)
+  project_name=$(basename $project_path)
 
-echo ""
-echo "$stats_file into $url/api/save?$query"
-echo ""
+  query="user=$USER\
+    &project=$project_name\
+    &branch=$branch\
+    &commit=$commit\
+    " | tr -d ' '
 
-curl -H "Content-Type: application/json" \
-  -X POST \
-  -d @$stats_file $url/api/save?$query \
-  -H 'Accept: text/plain'
+  echo "Uploading:"
+  echo "    user = $USER"
+  echo "    project = $project_name"
+  echo "    branch = $branch"
+  echo "    commit = $commit"
 
-echo ""
-echo "Done"
+  do_upload
+}
+
+function upload_with_description() {
+  query="user=$USER\
+    &desc=$desc\
+    " | tr -d ' '
+
+  echo "Uploading:"
+  echo "    user = $USER"
+  echo "    description = $desc"
+
+  do_upload
+}
+
+main
+
