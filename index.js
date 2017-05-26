@@ -53,6 +53,7 @@ app.get('/api/list', function(req, response) {
           paths: data.Contents.map((item) => {
             return item.Key;
           }),
+          data: data,
         });
       }
     });
@@ -166,6 +167,7 @@ app.post(
         } else {
           response.status(200).json({
             message: 'File saved as ' + name,
+            data: data,
           });
         }
       });

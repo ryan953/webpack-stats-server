@@ -44,4 +44,5 @@ curl -H "Content-Type: application/json" \
   -d @$stats_file $url/api/save?$query \
   -H 'Accept: text/plain'
 
+echo ""
 echo "Done"
