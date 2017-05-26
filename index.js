@@ -56,6 +56,7 @@ app.get('/api/list', function(req, response) {
     };
     s3.listObjectsV2(params, function(err, data) {
       if (err) {
+        console.log('list error', err);
         response.status(500).json({
           error: 'Error collecting file list',
           orig: err,
@@ -74,6 +75,7 @@ app.get('/api/list', function(req, response) {
     const globOptions = {cwd: DATA_ROOT};
     glob('**/*.json', globOptions, function(err, files) {
       if (err) {
+        console.log('list error', err);
         response.status(500).json({
           error: 'Error collecting file list',
           orig: err,
@@ -98,6 +100,7 @@ app.get('/api/get', function(req, response) {
     };
     s3.getObject(params, function(err, data) {
       if (err) {
+        console.log('get error', err);
         response.status(404).json({
           error: 'File not found',
           orig: err,
@@ -124,6 +127,7 @@ app.get('/api/get', function(req, response) {
         response.status(200).sendFile(filePath);
       }
     } catch (err) {
+      console.log('get error', err);
       response.status(500).json({
         error: 'Error sending file',
         orig: err,
@@ -173,6 +177,7 @@ app.post(
       };
       s3.upload(params, function(err, data) {
         if (err) {
+          console.log('upload error', err);
           response.status(500).json({
             error: 'Error writing file',
             orig: err,
@@ -187,6 +192,7 @@ app.post(
     } else {
       fs.writeFile(path.resolve(DATA_ROOT, name), body, function(err) {
         if (err) {
+          console.log('save error', err);
           response.status(500).json({
             error: 'Error writing file',
             orig: err,
