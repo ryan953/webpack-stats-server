@@ -65,9 +65,8 @@ app.get('/api/list', function(req, response) {
       } else {
         response.status(200).json({
           paths: data.Contents.map((item) => {
-            return item.Key;
+            return item.Key.replace(Prefix, '/api/get?file=');
           }),
-          data: data,
         });
       }
     });
