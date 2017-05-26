@@ -48,6 +48,7 @@ function upload_from_git_repo () {
     &project=$project_name\
     &branch=$branch\
     &commit=$commit\
+    &tag=$desc\
     " | tr -d ' '
 
   echo "Uploading:"

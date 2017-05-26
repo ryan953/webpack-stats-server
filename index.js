@@ -164,7 +164,8 @@ app.post(
           `${calendar}_${now}`,
           req.query.branch || 'master',
           req.query.commit || 'HEAD',
-        ].join('_') + '.json'
+          req.query.tag || null,
+        ].filter(_ => _).join('_') + '.json'
       : [
         req.query.user || 'anonymous',
         `${calendar}_${now}`,
