@@ -14,11 +14,24 @@ const s3 = new AWS.S3();
 if (!DATA_ROOT) {
   throw Error('Error: DATA_ROOT not set. You must configure a folder where uploads will be saved.');
 } else {
+  const s3Enabled = DATA_ROOT.startsWith('s3://');
   console.log('Starting app with config:', {
     PORT: PORT,
     DATA_ROOT: DATA_ROOT,
     PUBLIC_ROOT: PUBLIC_ROOT,
+    s3: {
+      enabled: s3Enabled,
+      Bucket: s3Enabled ? getS3BucketAndPrefix(DATA_ROOT)[0] : null,
+      Prefix: s3Enabled ? getS3BucketAndPrefix(DATA_ROOT)[1] : null,
+    },
   });
+}
+
+function getS3BucketAndPrefix(url) {
+  const parts = url.match('s3://([^/]+)/?(.*)');
+  const Bucket = parts[0];
+  const Prefix = parts[1];
+  return [Bucket, Prefix];
 }
 
 const app = express();
@@ -31,9 +44,9 @@ if (PUBLIC_ROOT) {
 
 app.get('/api/list', function(req, response) {
   if (DATA_ROOT.startsWith('s3://')) {
-    const parts = DATA_ROOT.match('s3://([^/]+)(.*)');
-    const Bucket = parts[1];
-    const Prefix = parts[2];
+    const parts = getS3BucketAndPrefix(DATA_ROOT);
+    const Bucket = parts[0];
+    const Prefix = parts[1];
 
     const params = {
       Bucket: Bucket,
@@ -74,9 +87,9 @@ app.get('/api/list', function(req, response) {
 
 app.get('/api/get', function(req, response) {
   if (DATA_ROOT.startsWith('s3://')) {
-    const parts = DATA_ROOT.match('s3://([^/]+)(.*)');
-    const Bucket = parts[1];
-    const Prefix = parts[2];
+    const parts = getS3BucketAndPrefix(DATA_ROOT);
+    const Bucket = parts[0];
+    const Prefix = parts[1];
 
     const params = {
       Bucket: Bucket,
@@ -149,9 +162,9 @@ app.post(
     ].join('/') + '.json';
 
     if (DATA_ROOT.startsWith('s3://')) {
-      const parts = DATA_ROOT.match('s3://([^/]+)(.*)');
-      const Bucket = parts[1];
-      const Prefix = parts[2];
+      const parts = getS3BucketAndPrefix(DATA_ROOT);
+      const Bucket = parts[0];
+      const Prefix = parts[1];
 
       const params = {
         Bucket: Bucket,
