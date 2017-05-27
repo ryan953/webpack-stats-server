@@ -2,12 +2,12 @@
 
 stats_file=$1
 #strip single trailing slash if exists on url, it'll be added back.
-url="${2/%\//}"
+host="${2/%\//}"
 desc=$3
 
 function main() {
-  if [[ -z $url ]]; then
-    echo 'No url specified. Where should we upload to?'
+  if [[ -z $host ]]; then
+    echo 'No host specified. Where should we upload to?'
     exit 1
   fi
 
@@ -24,13 +24,16 @@ function main() {
 }
 
 function do_upload () {
+  query=$1
+  url=$host/api/save?$query
+
   echo ""
-  echo "$stats_file into $url/api/save?$query"
+  echo "$stats_file into $url"
   echo ""
 
   curl -H "Content-Type: application/json" \
     -X POST \
-    -d @$stats_file $url/api/save?$query \
+    -d @$stats_file $url \
     -H 'Accept: text/plain'
 
   echo ""
@@ -57,7 +60,7 @@ function upload_from_git_repo () {
   echo "    branch = $branch"
   echo "    commit = $commit"
 
-  do_upload
+  do_upload $query
 }
 
 function upload_with_description() {
@@ -69,7 +72,7 @@ function upload_with_description() {
   echo "    user = $USER"
   echo "    description = $desc"
 
-  do_upload
+  do_upload $query
 }
 
 main
