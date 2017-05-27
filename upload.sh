@@ -24,8 +24,8 @@ function main() {
 }
 
 function do_upload () {
-  query=$1
-  url=$host/api/save?$query
+  local query="$1"
+  local url="$host/api/save?$query"
 
   echo ""
   echo "$stats_file into $url"
@@ -59,6 +59,7 @@ function upload_from_git_repo () {
   echo "    project = $project_name"
   echo "    branch = $branch"
   echo "    commit = $commit"
+  echo "    tag = $desc"
 
   do_upload $query
 }
