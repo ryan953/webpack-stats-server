@@ -47,12 +47,7 @@ function upload_from_git_repo () {
   project_path=$(git rev-parse --show-toplevel)
   project_name=$(basename $project_path)
 
-  query="user=$USER\
-    &project=$project_name\
-    &branch=$branch\
-    &commit=$commit\
-    &tag=$desc\
-    " | tr -d ' '
+  query="user=$USER&project=$project_name&branch=$branch&commit=$commit&tag=$desc"
 
   echo "Uploading:"
   echo "    user = $USER"
@@ -65,9 +60,7 @@ function upload_from_git_repo () {
 }
 
 function upload_with_description() {
-  query="user=$USER\
-    &desc=$desc\
-    " | tr -d ' '
+  query="user=$USER&desc=$desc"
 
   echo "Uploading:"
   echo "    user = $USER"
