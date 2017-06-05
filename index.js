@@ -63,10 +63,15 @@ app.get('/api/list', function(req, response) {
           stack: err.stack,
         });
       } else {
+        let paths = data.Contents.map((item) => {
+          return item.Key.replace(Prefix, '/api/get?file=');
+        });
+        if (req.query.limit) {
+          paths = paths.slice(Number(req.query.limit) * -1);
+        }
+
         response.status(200).json({
-          paths: data.Contents.map((item) => {
-            return item.Key.replace(Prefix, '/api/get?file=');
-          }),
+          paths: paths,
         });
       }
     });
@@ -80,6 +85,10 @@ app.get('/api/list', function(req, response) {
           orig: err,
         });
       } else {
+        if (req.query.limit) {
+          files = files.slice(Number(req.query.limit) * -1);
+        }
+
         response.status(200).json({paths: files});
       }
     });
